@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+# Локальная БД для разработки и архивы бэкапа: passkeys, сессии, личные траты
+data/
+*.db
+*.db-*
+*.tar.gz
+.env
+# Ревизию пишет scripts/remote-deploy.sh на сервере
+REVISION
+# Файлы импорта из таблицы — личные траты
+import/
+# Настройки конкретного сервера (образцы — deploy/*.example)
+deploy/money.env
+# Локальные настройки Claude Code и редактора
+.claude/

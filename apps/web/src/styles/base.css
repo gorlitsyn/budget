@@ -1,0 +1,152 @@
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--label); }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  font-size: var(--fs-body);
+  line-height: 1.29;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
+/* Поля ввода — не меньше 16 px: на меньшем шрифте Safari на iPhone увеличивает страницу при фокусе. */
+input, select, textarea { font-size: max(16px, 1em); }
+button { cursor: pointer; }
+a { color: var(--acc); text-decoration: none; }
+
+/* ---- страница ---- */
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: calc(var(--sat) + 8px) var(--pad) calc(var(--tabbar-h) + 28px);
+}
+.page.no-tabs { padding-bottom: calc(var(--sab) + 32px); }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 6px 0 14px; }
+.large-title { font-size: var(--fs-large); font-weight: 700; letter-spacing: -0.028em; line-height: 1.1; margin: 0; }
+.subtitle { color: var(--label-2); font-size: var(--fs-subhead); margin: 4px 0 0; }
+
+/* ---- сгруппированные списки ---- */
+.section-title {
+  color: var(--label-2);
+  font-size: var(--fs-footnote);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 20px 14px 6px;
+}
+.section-foot { color: var(--label-2); font-size: var(--fs-footnote); margin: 6px 14px 0; line-height: 1.35; }
+.group { background: var(--surface); border-radius: var(--r-card); overflow: hidden; }
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+  padding: 8px 14px;
+  position: relative;
+  width: 100%;
+  background: none;
+  border: 0;
+  text-align: left;
+}
+.row + .row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 0;
+  border-top: 0.5px solid var(--sep);
+}
+.row .grow { flex: 1; min-width: 0; }
+.row .meta { color: var(--label-2); font-size: var(--fs-subhead); }
+.row .sub { color: var(--label-2); font-size: var(--fs-footnote); margin-top: 2px; }
+button.row:active { background: var(--fill); }
+.row.danger { color: var(--red); }
+.row.accent { color: var(--acc); }
+
+/* ---- кнопки ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: var(--r);
+  border: 0;
+  background: var(--acc);
+  color: var(--on-acc);
+  font-weight: 600;
+  transition: transform var(--fast) var(--ease), opacity var(--fast);
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.4; }
+.btn.block { width: 100%; }
+.btn.plain { background: var(--fill); color: var(--acc); }
+/* Удаление и т.п.: иначе .btn.plain перебивает красный из стилей страницы. */
+.btn.plain.danger { color: var(--red); }
+.btn.small { min-height: 30px; padding: 0 12px; font-size: var(--fs-subhead); border-radius: 999px; }
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--fill);
+  color: var(--acc);
+}
+
+/* ---- поля ---- */
+.input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 14px;
+  background: var(--surface);
+  border: 0;
+  border-radius: var(--r);
+  outline: none;
+}
+.row .input { background: none; padding: 0; min-height: 0; text-align: right; }
+.input::placeholder { color: var(--label-3); }
+
+/* ---- сегменты ---- */
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  background: var(--fill);
+  border-radius: 9px;
+  padding: 2px;
+  gap: 2px;
+}
+.segmented button {
+  border: 0;
+  background: none;
+  border-radius: 7px;
+  min-height: 26px;
+  padding: 0 6px;
+  font-size: var(--fs-footnote);
+  font-weight: 500;
+  color: var(--label);
+}
+.segmented button.on { background: var(--surface-2); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04); }
+:root[data-theme='light'] .segmented button.on { background: #fff; }
+@media (prefers-color-scheme: light) { :root:not([data-theme='dark']) .segmented button.on { background: #fff; } }
+
+/* ---- прочее ---- */
+.error { color: var(--red); font-size: var(--fs-subhead); margin: 10px 4px; }
+.muted { color: var(--label-2); }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--acc-soft);
+  color: var(--acc);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+.empty { text-align: center; color: var(--label-2); padding: 32px 20px; font-size: var(--fs-subhead); }
+.empty .icon { color: var(--label-3); margin-bottom: 8px; }
+.empty h2 { color: var(--label); font-size: var(--fs-title); margin: 0 0 6px; }

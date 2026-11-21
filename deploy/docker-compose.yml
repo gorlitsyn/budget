@@ -1,0 +1,21 @@
+# Базовый стек: api + web. Порты на хост здесь не публикуются, доступ снаружи даёт один из оверлеев:
+#   docker-compose.port.yml         — порт на 127.0.0.1 для своего HTTPS-прокси
+#   docker-compose.caddy-proxy.yml  — маршрут через caddy-docker-proxy
+# Настройки: deploy/.env и deploy/money.env (образцы — *.example).
+name: money
+
+services:
+  api:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: api }
+    image: money-api:local
+    restart: unless-stopped
+    env_file: money.env
+    volumes:
+      - ${MONEY_DATA:-../data}:/data
+
+  web:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: web }
+    image: money-web:local
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }

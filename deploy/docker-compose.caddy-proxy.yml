@@ -1,0 +1,13 @@
+# Маршрут через уже работающий caddy-docker-proxy: домен и его сеть — в deploy/.env.
+services:
+  web:
+    # default обязателен: без него web не видит api.
+    networks: [default, proxy]
+    labels:
+      caddy: ${MONEY_DOMAIN:?укажите MONEY_DOMAIN в deploy/.env}
+      caddy.reverse_proxy: "{{upstreams 80}}"
+
+networks:
+  proxy:
+    name: ${MONEY_PROXY_NETWORK:?укажите MONEY_PROXY_NETWORK в deploy/.env}
+    external: true

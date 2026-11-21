@@ -1,0 +1,108 @@
+/*
+ * Токены оформления. Визуальный язык — системный iOS (как у openGym), но CSS свой:
+ * цвета — системная палитра Apple, тёмная тема по умолчанию, светлая — по системе или вручную.
+ */
+:root {
+  color-scheme: dark;
+  --bg: #000;
+  --bg-el: #0e0e10;
+  --surface: #1c1c1e;
+  --surface-2: #2c2c2e;
+  --label: #fff;
+  --label-2: rgba(235, 235, 245, 0.6);
+  --label-3: rgba(235, 235, 245, 0.3);
+  --sep: rgba(84, 84, 88, 0.6);
+  --fill: rgba(118, 118, 128, 0.24);
+  --bar: rgba(22, 22, 24, 0.78);
+
+  --green: #30d158;
+  --blue: #0a84ff;
+  --teal: #40c8e0;
+  --indigo: #5e5ce6;
+  --purple: #bf5af2;
+  --pink: #ff375f;
+  --orange: #ff9f0a;
+  --red: #ff453a;
+  --yellow: #ffd60a;
+
+  --acc: var(--red);
+  --on-acc: #fff;
+  --acc-soft: color-mix(in srgb, var(--acc) 16%, transparent);
+
+  --r-sm: 7px;
+  --r: 10px;
+  --r-card: 12px;
+  --r-lg: 18px;
+  --pad: 14px;
+
+  /* Плотная шкала: основной текст 15 px (в iOS по умолчанию 17 — на длинных списках громоздко). */
+  --fs-caption: 0.6875rem;
+  --fs-footnote: 0.75rem;
+  --fs-subhead: 0.8125rem;
+  --fs-body: 0.9375rem;
+  --fs-title: 1.125rem;
+  --fs-large: 1.625rem;
+
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --fast: 140ms;
+
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --tabbar-h: calc(46px + var(--sab));
+
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    color-scheme: light;
+    --bg: #f2f2f7;
+    --bg-el: #f7f7fa;
+    --surface: #fff;
+    --surface-2: #f2f2f7;
+    --label: #000;
+    --label-2: rgba(60, 60, 67, 0.6);
+    --label-3: rgba(60, 60, 67, 0.3);
+    --sep: rgba(60, 60, 67, 0.29);
+    --fill: rgba(118, 118, 128, 0.12);
+    --bar: rgba(249, 249, 249, 0.82);
+    --green: #34c759;
+    --blue: #007aff;
+    --teal: #30b0c7;
+    --indigo: #5856d6;
+    --purple: #af52de;
+    --pink: #ff2d55;
+    --orange: #ff9500;
+    --red: #ff3b30;
+  }
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f2f2f7;
+  --bg-el: #f7f7fa;
+  --surface: #fff;
+  --surface-2: #f2f2f7;
+  --label: #000;
+  --label-2: rgba(60, 60, 67, 0.6);
+  --label-3: rgba(60, 60, 67, 0.3);
+  --sep: rgba(60, 60, 67, 0.29);
+  --fill: rgba(118, 118, 128, 0.12);
+  --bar: rgba(249, 249, 249, 0.82);
+  --green: #34c759;
+  --blue: #007aff;
+  --teal: #30b0c7;
+  --indigo: #5856d6;
+  --purple: #af52de;
+  --pink: #ff2d55;
+  --orange: #ff9500;
+  --red: #ff3b30;
+}
+
+:root[data-accent='red'] { --acc: var(--red); --on-acc: #fff; }
+:root[data-accent='green'] { --acc: var(--green); --on-acc: #000; }
+:root[data-accent='blue'] { --acc: var(--blue); --on-acc: #fff; }
+:root[data-accent='teal'] { --acc: var(--teal); --on-acc: #000; }
+:root[data-accent='indigo'] { --acc: var(--indigo); --on-acc: #fff; }
+:root[data-accent='purple'] { --acc: var(--purple); --on-acc: #fff; }
+:root[data-accent='pink'] { --acc: var(--pink); --on-acc: #fff; }
+:root[data-accent='orange'] { --acc: var(--orange); --on-acc: #000; }

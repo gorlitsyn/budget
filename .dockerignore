@@ -1,0 +1,11 @@
+.git
+.claude
+**/node_modules
+**/dist
+data
+import
+*.db
+*.db-*
+*.tar.gz
+deploy/.env
+deploy/money.env
