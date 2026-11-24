@@ -19,6 +19,7 @@ export const PATHS = {
   tag: 'M3 12V4h8l10 10-8 8z M7.5 8.5h.01',
   filter: 'M4 6h16 M7 12h10 M10 18h4',
   close: 'M6 6l12 12 M18 6L6 18',
+  search: 'M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13z M15.5 15.5L20 20',
   alert: 'M12 4l9 16H3z M12 10v4 M12 17h.01',
   sparkle: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z',
 } as const;

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { ShoppingItem } from '@money/shared';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { api } from '../api.ts';
-import { amountInput, money, parseAmount } from '../money.ts';
+import { money } from '../money.ts';
+import { pieces, searchKey, unitFor } from '../qty.ts';
 import Icon from '../components/Icon.vue';
 import PageHead from '../components/PageHead.vue';
+import ShoppingItemEdit from '../components/ShoppingItemEdit.vue';
 import SwipeRow from '../components/SwipeRow.vue';
 import { useSession } from '../stores/session.ts';
 import { useShopping } from '../stores/shopping.ts';
@@ -19,11 +21,8 @@ const input = ref<HTMLInputElement>();
 const focused = ref(false);
 const suggestions = ref<string[]>([]);
 const editing = ref<string | null>(null);
-const editName = ref('');
-const editQty = ref('');
-const editPrice = ref('');
-const priceBad = ref(false);
 const showBought = ref(true);
+const query = ref('');
 
 // ---- жизненный цикл: пространство, сеть, возврат в приложение ------------------------------
 
@@ -85,35 +84,23 @@ function add(name = draft.value) {
 // ---- правка позиции ----------------------------------------------------------------------------
 
 function startEdit(item: ShoppingItem) {
-  if (!canEdit.value) return;
-  editing.value = item.id;
-  editName.value = item.name;
-  editQty.value = item.qty;
-  editPrice.value = item.price ? amountInput(item.price) : '';
-  priceBad.value = false;
-  void nextTick(() => document.querySelector<HTMLInputElement>('.edit-name')?.focus());
+  if (canEdit.value) editing.value = item.id;
 }
-function saveEdit(item: ShoppingItem) {
-  const name = editName.value.trim();
-  const priceText = editPrice.value.trim();
-  const price = priceText ? parseAmount(priceText) : null;
-  if (priceText && price === null) {
-    priceBad.value = true; // «12,3,4» и т.п. — не сохраняем молча
-    return;
-  }
-  const qty = editQty.value.trim();
-  if (name && (name !== item.name || qty !== item.qty || price !== item.price)) shop.update(item, { name, qty, price });
-  editing.value = null;
+
+/** «по 73 ₽» под суммой, если в количестве целое число штук. */
+function perPiece(item: ShoppingItem): string {
+  const n = item.price ? pieces(item.qty) : null;
+  return n ? `по ${money(unitFor(n, item.price!))}` : '';
 }
 
 const sumPrices = (items: ShoppingItem[]) => items.reduce((s, i) => s + (i.price ?? 0), 0);
 const toBuyTotal = computed(() => sumPrices(shop.toBuy));
 const toBuyUnpriced = computed(() => shop.toBuy.filter((i) => !i.price).length);
 const boughtTotal = computed(() => sumPrices(shop.bought));
-function removeEdit(item: ShoppingItem) {
-  shop.remove(item);
-  editing.value = null;
-}
+const shownBought = computed(() => {
+  const q = searchKey(query.value);
+  return q ? shop.bought.filter((i) => searchKey(i.name).includes(q)) : shop.bought;
+});
 
 // ---- списки ------------------------------------------------------------------------------------
 
@@ -203,31 +190,16 @@ const status = computed(() => {
       <SwipeRow v-for="item in shop.toBuy" :key="item.id" :disabled="!canEdit || editing === item.id" @delete="shop.remove(item)">
         <div class="row item">
           <button class="check" :disabled="!canEdit" :aria-label="`Куплено: ${item.name}`" @click="shop.toggle(item)" />
-          <div v-if="editing === item.id" class="edit grow">
-            <input v-model="editName" class="edit-name" maxlength="120" aria-label="Название" @keydown.enter="saveEdit(item)" />
-            <div class="edit-line">
-              <input v-model="editQty" class="edit-qty" placeholder="Кол-во" maxlength="30" aria-label="Количество" @keydown.enter="saveEdit(item)" />
-              <input
-                v-model="editPrice"
-                class="edit-price"
-                :class="{ bad: priceBad }"
-                placeholder="Цена, ₽"
-                inputmode="decimal"
-                aria-label="Цена"
-                @input="priceBad = false"
-                @keydown.enter="saveEdit(item)"
-              />
-              <button class="icon-btn danger" aria-label="Удалить" @click="removeEdit(item)"><Icon name="trash" :size="16" /></button>
-              <button class="icon-btn" aria-label="Готово" @click="saveEdit(item)"><Icon name="check" :size="16" /></button>
-            </div>
-          </div>
+          <ShoppingItemEdit v-if="editing === item.id" :item="item" @done="editing = null" />
           <template v-else>
             <button class="grow text" @click="startEdit(item)">
               <span>{{ item.name }}</span>
               <span v-if="item.qty" class="qty">{{ item.qty }}</span>
               <span v-if="who(item.addedBy)" class="sub">{{ who(item.addedBy) }}</span>
             </button>
-            <span v-if="item.price" class="price">{{ money(item.price) }}</span>
+            <span v-if="item.price" class="price">
+              {{ money(item.price) }}<small v-if="perPiece(item)">{{ perPiece(item) }}</small>
+            </span>
           </template>
         </div>
       </SwipeRow>
@@ -247,22 +219,37 @@ const status = computed(() => {
         Куплено · {{ shop.bought.length }}<template v-if="boughtTotal"> · {{ money(boughtTotal) }}</template>
         <Icon name="chevron" :size="12" :class="{ open: showBought }" />
       </button>
-      <div v-if="showBought" class="group">
-        <SwipeRow v-for="item in shop.bought" :key="item.id" :disabled="!canEdit" @delete="shop.remove(item)">
-          <div class="row item done">
-            <button class="check on" :disabled="!canEdit" :aria-label="`Вернуть: ${item.name}`" @click="shop.toggle(item)">
-              <Icon name="check" :size="14" />
-            </button>
-            <div class="grow text">
-              <span>{{ item.name }}</span>
-              <span v-if="item.qty" class="qty">{{ item.qty }}</span>
-              <span v-if="who(item.checkedBy)" class="sub">купил(а) {{ who(item.checkedBy) }}</span>
+      <template v-if="showBought">
+        <label class="search">
+          <Icon name="search" :size="15" />
+          <input v-model="query" type="search" placeholder="Найти в купленном" enterkeyhint="search" autocomplete="off" />
+          <button v-if="query" type="button" class="search-x" aria-label="Очистить поиск" @click="query = ''">
+            <Icon name="close" :size="12" />
+          </button>
+        </label>
+        <div v-if="shownBought.length" class="group">
+          <SwipeRow v-for="item in shownBought" :key="item.id" :disabled="!canEdit || editing === item.id" @delete="shop.remove(item)">
+            <div class="row item done">
+              <button class="check on" :disabled="!canEdit" :aria-label="`Вернуть: ${item.name}`" @click="shop.toggle(item)">
+                <Icon name="check" :size="14" />
+              </button>
+              <ShoppingItemEdit v-if="editing === item.id" :item="item" @done="editing = null" />
+              <template v-else>
+                <button class="grow text" @click="startEdit(item)">
+                  <span>{{ item.name }}</span>
+                  <span v-if="item.qty" class="qty">{{ item.qty }}</span>
+                  <span v-if="who(item.checkedBy)" class="sub">купил(а) {{ who(item.checkedBy) }}</span>
+                </button>
+                <span v-if="item.price" class="price">
+                  {{ money(item.price) }}<small v-if="perPiece(item)">{{ perPiece(item) }}</small>
+                </span>
+              </template>
             </div>
-            <span v-if="item.price" class="price">{{ money(item.price) }}</span>
-          </div>
-        </SwipeRow>
-      </div>
-      <p v-if="canEdit && showBought" class="section-foot">Смахните влево, чтобы удалить.</p>
+          </SwipeRow>
+        </div>
+        <p v-else class="section-foot">Ничего не найдено.</p>
+        <p v-if="canEdit && shownBought.length" class="section-foot">Смахните влево, чтобы удалить.</p>
+      </template>
     </template>
   </main>
 </template>
@@ -313,19 +300,13 @@ const status = computed(() => {
 .text { background: none; border: 0; padding: 0; text-align: left; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; }
 .text .sub { width: 100%; margin: 0; }
 .qty { color: var(--label-2); font-size: var(--fs-footnote); }
-.done .text > span:first-child { color: var(--label-2); text-decoration: line-through; }
-/* minmax(0, 1fr) и width: 100% — иначе поля берут свою стандартную ширину (~20 символов), строка вылезает
-   за край, а фокус прокручивает её так, что кружок уезжает влево. */
-.edit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
-.edit-line { display: flex; gap: 6px; align-items: center; min-width: 0; }
-.edit-name, .edit-qty, .edit-price { width: 100%; border: 0; background: var(--fill); border-radius: var(--r-sm); padding: 4px 8px; outline: none; min-width: 0; }
-.edit-qty, .edit-price { flex: 1 1 0; }
-.edit-price.bad { box-shadow: inset 0 0 0 1.5px var(--red); }
-.price { flex: none; color: var(--label-2); font-size: var(--fs-subhead); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.done .price { color: var(--label-3); }
+.price { flex: none; display: grid; justify-items: end; color: var(--label-2); font-size: var(--fs-subhead); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.price small { color: var(--label-3); font-size: var(--fs-caption); }
+.search { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; padding: 0 10px; min-height: 34px; border-radius: var(--r); background: var(--fill); color: var(--label-2); }
+.search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; color: var(--label); padding: 0; }
+.search input::-webkit-search-cancel-button { display: none; }
+.search-x { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 50%; background: var(--label-3); color: var(--bg); padding: 0; }
 .total { text-align: right; font-variant-numeric: tabular-nums; }
-.item .icon-btn { width: 30px; height: 30px; }
-.icon-btn.danger { color: var(--red); }
 .toggle { background: none; border: 0; display: inline-flex; align-items: center; gap: 4px; padding: 0; }
 .toggle :deep(svg) { transition: transform var(--fast); }
 .open { transform: rotate(90deg); }
