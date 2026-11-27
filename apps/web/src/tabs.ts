@@ -11,7 +11,7 @@ export interface Tab {
 
 export const TABS: Tab[] = [
   { path: '/shopping', title: 'Покупки', icon: 'cart', sections: ['shopping'] },
-  { path: '/transactions', title: 'Траты', icon: 'receipt', sections: ['transactions', 'incomes'] },
+  { path: '/transactions', title: 'Операции', icon: 'receipt', sections: ['transactions', 'incomes'] },
   { path: '/summary', title: 'Сводка', icon: 'chart', sections: ['summary'] },
   { path: '/plan', title: 'План', icon: 'target', sections: ['plan'] },
   { path: '/more', title: 'Ещё', icon: 'more', sections: [] },

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Income, IncomeKind, Summary, Transaction } from '@money/shared';
+import type { Income, IncomeKind, Transaction } from '@money/shared';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { api, errorText } from '../api.ts';
 import EntrySheet from '../components/EntrySheet.vue';
@@ -18,8 +18,6 @@ const dicts = useDicts();
 const owner = computed(() => session.spaceId ?? '');
 const canTx = computed(() => session.can('transactions'));
 const canIncome = computed(() => session.can('incomes'));
-/** Остаток складывается из всех трёх разделов: без любого из них число было бы неверным. */
-const canBalance = computed(() => canTx.value && canIncome.value && session.can('summary'));
 const editTx = computed(() => session.can('transactions', 'edit'));
 const editIncome = computed(() => session.can('incomes', 'edit'));
 
@@ -27,8 +25,6 @@ const month = ref(thisMonth());
 const mode = ref<Mode>(canTx.value ? 'tx' : 'income');
 const txs = ref<Transaction[]>([]);
 const incomes = ref<Income[]>([]);
-/** Остаток на начало месяца — из сводки; null — месяц раньше начального остатка. */
-const carryIn = ref<number | null>(null);
 const loaded = ref(false);
 const error = ref('');
 const sheet = ref<{ kind: Mode; entry: Transaction | Income | null } | null>(null);
@@ -40,13 +36,11 @@ const filterId = ref<string | null>(null);
 async function load() {
   error.value = '';
   try {
-    const [, t, i, s] = await Promise.all([
+    const [, t, i] = await Promise.all([
       dicts.load(owner.value),
       canTx.value ? api<Transaction[]>(`/api/spaces/${owner.value}/transactions?month=${month.value}`) : [],
       canIncome.value ? api<Income[]>(`/api/spaces/${owner.value}/incomes?month=${month.value}`) : [],
-      canBalance.value ? api<Summary>(`/api/spaces/${owner.value}/summary?month=${month.value}`) : null,
     ]);
-    carryIn.value = s?.carryIn ?? null;
     txs.value = t;
     incomes.value = i;
     loaded.value = true;
@@ -64,10 +58,6 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
 
 const sum = (xs: { amount: number }[]) => xs.reduce((s, x) => s + x.amount, 0);
 const spent = computed(() => sum(txs.value));
-const earned = computed(() => sum(incomes.value));
-/** Тот же «Остаток», что в «Сводке»: на начало месяца + поступления − расходы. */
-const balance = computed(() => (carryIn.value === null ? null : carryIn.value + earned.value - spent.value));
-const balanceText = computed(() => (balance.value === null ? '—' : money(balance.value).replace(/^-/, '−')));
 
 // ---- фильтр по категории -----------------------------------------------------------------------
 
@@ -154,24 +144,9 @@ const removeKind = (k: IncomeKind) => {
 
 <template>
   <main class="page">
-    <PageHead title="Траты" switcher />
+    <PageHead title="Операции" switcher />
 
     <MonthNav v-model="month" />
-
-    <div class="totals group">
-      <div v-if="canTx" class="total">
-        <span class="sub">Расходы</span>
-        <strong>{{ money(spent) }}</strong>
-      </div>
-      <div v-if="canIncome" class="total">
-        <span class="sub">Поступления</span>
-        <strong class="plus">{{ money(earned) }}</strong>
-      </div>
-      <div v-if="canBalance" class="total">
-        <span class="sub">Остаток</span>
-        <strong :class="{ minus: balance !== null && balance < 0 }">{{ balanceText }}</strong>
-      </div>
-    </div>
 
     <div v-if="canTx && canIncome" class="segmented mode" role="tablist" aria-label="Что показать">
       <button role="tab" :aria-selected="mode === 'tx'" :class="{ on: mode === 'tx' }" @click="mode = 'tx'">Расходы</button>
@@ -211,7 +186,7 @@ const removeKind = (k: IncomeKind) => {
 
     <div v-if="loaded && !days.length" class="empty">
       <div class="icon"><Icon name="receipt" :size="44" /></div>
-      <h2>{{ mode === 'tx' ? (filterId ? 'В этой категории трат нет' : 'Трат нет') : 'Поступлений нет' }}</h2>
+      <h2>{{ mode === 'tx' ? (filterId ? 'В этой категории расходов нет' : 'Расходов нет') : 'Поступлений нет' }}</h2>
       <p v-if="canAdd">Нажмите «+», чтобы добавить.</p>
     </div>
 
@@ -273,22 +248,9 @@ const removeKind = (k: IncomeKind) => {
 </template>
 
 <style scoped>
-.totals { display: flex; }
-.total {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 9px 12px;
-}
-.total + .total { border-left: 0.5px solid var(--sep); }
 .mode { margin-top: 8px; }
 .mode button { min-height: 30px; font-size: var(--fs-subhead); }
-.total .sub { color: var(--label-2); font-size: var(--fs-footnote); }
-.total strong { font-size: var(--fs-subhead); font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -0.02em; }
 .plus { color: var(--green); }
-.minus { color: var(--red); }
 .filter-bar { display: flex; align-items: center; gap: 8px; margin-top: 8px; min-width: 0; }
 .filter {
   display: inline-flex;

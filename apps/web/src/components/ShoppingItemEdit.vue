@@ -25,6 +25,8 @@ const bad = ref<'unit' | 'total' | null>(null);
 const nameInput = ref<HTMLInputElement>();
 onMounted(() => nameInput.value?.focus());
 
+/** Цена за единицу нужна, только когда единиц больше одной: при «1 шт.» она равна сумме. */
+const perUnit = computed(() => !!count.value && count.value.n !== 1);
 const unitLabel = computed(() => `Цена за 1${count.value?.unit ? ` ${count.value.unit}` : ''}`);
 
 function recalcTotal() {
@@ -48,7 +50,7 @@ function onTotal() {
 
 function save() {
   const n = name.value.trim();
-  if (unit.value.trim() && count.value && parseAmount(unit.value) === null) {
+  if (perUnit.value && unit.value.trim() && parseAmount(unit.value) === null) {
     bad.value = 'unit';
     return;
   }
@@ -80,9 +82,9 @@ function remove() {
     <div class="edit-line">
       <label class="f">
         <span>Кол-во</span>
-        <input v-model="qty" class="field" placeholder="3 шт." maxlength="30" @input="onQty" @keydown.enter="save" />
+        <input v-model="qty" class="field" maxlength="30" @input="onQty" @keydown.enter="save" />
       </label>
-      <label v-if="count" class="f">
+      <label v-if="perUnit" class="f">
         <span>{{ unitLabel }}</span>
         <input
           v-model="unit"

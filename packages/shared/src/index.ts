@@ -9,7 +9,7 @@ export type Section = (typeof SECTIONS)[number];
 
 export const SECTION_TITLES: Record<Section, string> = {
   shopping: 'Покупки',
-  transactions: 'Траты',
+  transactions: 'Расходы',
   incomes: 'Поступления',
   summary: 'Сводка',
   plan: 'План',

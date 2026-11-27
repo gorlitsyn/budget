@@ -96,7 +96,6 @@ function perPiece(item: ShoppingItem): string {
 const sumPrices = (items: ShoppingItem[]) => items.reduce((s, i) => s + (i.price ?? 0), 0);
 const toBuyTotal = computed(() => sumPrices(shop.toBuy));
 const toBuyUnpriced = computed(() => shop.toBuy.filter((i) => !i.price).length);
-const boughtTotal = computed(() => sumPrices(shop.bought));
 const shownBought = computed(() => {
   const q = searchKey(query.value);
   return q ? shop.bought.filter((i) => searchKey(i.name).includes(q)) : shop.bought;
@@ -216,7 +215,7 @@ const status = computed(() => {
     <!-- куплено -->
     <template v-if="shop.bought.length">
       <button class="section-title toggle" @click="showBought = !showBought">
-        Куплено · {{ shop.bought.length }}<template v-if="boughtTotal"> · {{ money(boughtTotal) }}</template>
+        Куплено · {{ shop.bought.length }}
         <Icon name="chevron" :size="12" :class="{ open: showBought }" />
       </button>
       <template v-if="showBought">
